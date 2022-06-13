@@ -82,9 +82,17 @@ class HomeController extends Controller
     public function stop(Request $request, $id)
     {
         $inputs = $request->all();
+        $spots = Spot::where('id', $id)->get();
+        $spot_lis =  json_decode($spots , true); 
         //判定
-        Spot::where('id', $id)->update(['status'=>'Stop']);
-        return redirect()->route('home')->with('success', '停止が完了しました！');
+        if ($spots[0]["status"]=="Run"){
+           Spot::where('id', $id)->update(['status'=>'Stop']); 
+           return redirect()->route('home')->with('success', '停止が完了しました！');
+        }else{
+            return redirect()->route('home')->with('success', '処理が開始されていません');
+        }
+        
+        
     }
 
 }

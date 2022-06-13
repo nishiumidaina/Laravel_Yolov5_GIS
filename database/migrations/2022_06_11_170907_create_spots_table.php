@@ -21,6 +21,8 @@ class CreateSpotsTable extends Migration
             $table->text('ex');
             $table->text('url');
             $table->text('status')->defalut('None');
+            #$table->integer('count')->defalut(0);
+            #$table->text('judge')->defalut(0);
             // timestampと書いてしまうと、レコード挿入時、更新時に値が入らないので、DB::rawで直接書いてます
             $table->timestamp('updated_at')->default(DB::raw('CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP'));
             $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
