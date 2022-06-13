@@ -1,6 +1,7 @@
 import argparse
 import time
 import os
+import shutil
 # limit the number of cpus used by high performance libraries
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
@@ -45,7 +46,6 @@ logging.getLogger().removeHandler(logging.getLogger().handlers[0])
 
 import mysql.connector
 
-
 @torch.no_grad()
 def run(
         source='0',
@@ -77,6 +77,24 @@ def run(
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
 ):
+    #停止ボタンによる処理
+    conn = mysql.connector.connect(
+        host='127.0.0.1',
+        port='8889',
+        user='root',
+        password='root',
+        database='gisproject'
+        )
+    cur = conn.cursor(buffered=True)
+    cur.execute("SELECT id, name, status FROM spots")
+    db_lis_new = cur.fetchall()
+    # DB操作終了
+    cur.close()
+    db_info = []
+    for item in range(len(db_lis_new)):
+        if 'Run' in db_lis_new[item][2]:
+            db_info.append(db_lis_new[item])
+    print(db_info)
 
     #計測時間記録用のグローバル変数
     id_count = []
@@ -191,6 +209,7 @@ def run(
                     cur.execute(sql,param)
                     conn.commit()
                     cur.close()
+                    shutil.rmtree(project)
                     exit()
 
         
@@ -258,12 +277,14 @@ def run(
                         cur.execute(sql,param)
                         conn.commit()
                         cur.close()
+                        shutil.rmtree(project)
                         exit()
 
                 xywhs = xyxy2xywh(det[:, 0:4])
                 confs = det[:, 4]
                 clss = det[:, 5]
 
+                
                 # pass detections to strongsort
                 t4 = time_sync()
                 outputs[i] = strongsort_list[i].update(xywhs.cpu(), confs.cpu(), clss.cpu(), im0)
@@ -287,7 +308,7 @@ def run(
                         db_lis_last = cur.fetchall()
                         # DB操作終了
                         cur.close()
-                        print(db_lis_last)
+                        #print(db_lis_last)
                         for iii in range(len(db_lis_last)):
                             if 'Stop' in db_lis_last[iii][2]:
                                 cur = conn.cursor(buffered=True)
@@ -296,6 +317,7 @@ def run(
                                 cur.execute(sql,param)
                                 conn.commit()
                                 cur.close()
+                                shutil.rmtree(project)
                                 exit()
 
                         bboxes = output[0:4]
@@ -320,7 +342,7 @@ def run(
 
                         #放置時間計測
                         time_dif =Decimal(time_lis[2]) - Decimal(time_lis[1])
-                        print(time_dif)
+                        #print(time_dif)
                         out_time = 15 #違反時間を設定(秒数)
                         if time_dif >= out_time:
                             time_lis[3] = '違反車両'
@@ -328,7 +350,7 @@ def run(
                                 id_violation.append(id2)
                         id_collect.append(id2) 
                         #確認用
-                        print(time_lis)                        
+                        #print(time_lis)                        
                         if save_txt:
                             # to MOT format
                             bbox_left = output[0]
@@ -354,9 +376,9 @@ def run(
                             id_count[i3] = "None"
                     target = "None"  #Noneを取り除く
                     id_count = [item for item in id_count if item != target]
-                    print(id_collect)#現在のトラッキング
-                    print(id_count)
-                    print(id_violation)#違反車両
+                    #print(id_collect)#現在のトラッキング
+                    #print(id_count)
+                    #print(id_violation)#違反車両
                     id_collect.clear()
 
 
@@ -373,6 +395,7 @@ def run(
                 cv2.waitKey(1)  # 1 millisecond
 
             # Save results (image with detections)
+            """
             if save_vid:
                 if vid_path[i] != save_path:  # new video
                     vid_path[i] = save_path
@@ -387,9 +410,8 @@ def run(
                     save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
                     vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                 vid_writer[i].write(im0)
-
+            """
             prev_frames[i] = curr_frames[i]
-
     # Print results
     t = tuple(x / seen * 1E3 for x in dt)  # speeds per image
     LOGGER.info(f'Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS, %.1fms strong sort update per image at shape {(1, 3, *imgsz)}' % t)
