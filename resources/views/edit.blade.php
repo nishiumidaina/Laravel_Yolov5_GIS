@@ -5,6 +5,7 @@
     <div class="card w-100">
     <div class="card-header d-flex justify-content-between">
     {{ $spot['name'] }}
+    {{ $spot['count'] }}
         </div>
         <div class="form-group">
             <form method='POST' action="/start/{{$spot['id']}}" id='delete-form'>

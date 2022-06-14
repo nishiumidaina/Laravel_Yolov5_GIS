@@ -44,7 +44,8 @@ class HomeController extends Controller
              'latitude' => $data['latitude'],
              'url' => $data['url'],
              'ex' => $data['ex'],
-             'status' => 'None'
+             'status' => 'None',
+             'count' => 0
         ]);
         // リダイレクト処理
         return redirect()->route('home');
@@ -55,7 +56,7 @@ class HomeController extends Controller
         $spot = Spot::where('id', $id)->first();
         $spots = Spot::get();
         //   dd($memo);
-        //取得したメモをViewに渡す
+        //取得した情報をViewに渡す
         return view('edit',compact('user','spot','spots'));
     }
 
@@ -70,21 +71,30 @@ class HomeController extends Controller
     public function start(Request $request, $id)
     {
         $inputs = $request->all();
+        $spots = Spot::where('id', $id)->get();
+        $spot_lis =  json_decode($spots , true); 
         //判定
-        Spot::where('id', $id)->update(['status'=>'Start']);
-
-        //$command = 'python Python/yolov5/detect.py --source "https://www.youtube.com/watch?v=DjdUEyjx8GM"> /dev/null &';
-        //直接detect.pyを送ると終了できないため一時的にこちらを使う
-        $command = 'python Python/yolov5_DeepSort_Pytorch/start.py> /dev/null &';
-        exec($command) ;
-        return redirect()->route('home')->with('success', '実行が完了しました！');
+        if ($spots[0]["status"]=="Run"){
+            return redirect()->route('home')->with('success', '処理中です');
+        }else if ($spots[0]["status"]=="None"){
+           Spot::where('id', $id)->update(['status'=>'Start']);
+           $command = 'python Python/yolov5/start.py';
+           popen('start "" ' . $command, 'r');
+           return redirect()->route('home')->with('success', '処理を開始します');
+        }
     }
     public function stop(Request $request, $id)
     {
         $inputs = $request->all();
+        $spots = Spot::where('id', $id)->get();
+        $spot_lis =  json_decode($spots , true); 
         //判定
-        Spot::where('id', $id)->update(['status'=>'Stop']);
-        return redirect()->route('home')->with('success', '停止が完了しました！');
+        if ($spots[0]["status"]=="Run"){
+           Spot::where('id', $id)->update(['status'=>'Stop']); 
+           return redirect()->route('home')->with('success', '処理を停止します');
+        }else{
+            return redirect()->route('home')->with('success', '処理が開始されていません');
+        }
     }
 
 }

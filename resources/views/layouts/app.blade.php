@@ -97,6 +97,9 @@
                 <link rel='stylesheet' href='https://unpkg.com/leaflet@1.3.0/dist/leaflet.css' />
                 <script src='https://unpkg.com/leaflet@1.3.0/dist/leaflet.js'></script>
                 <div id='mapcontainer' style='width:100%; height:300px; z-index:0;'></div>
+                {{ $a=1 }}
+                {{ $a }}
+                
                 <!--<script type="text/javascript" src="{{ asset('/js/gis.js') }}"></script>-->
                 <script>//ピンの表示
                     const data = @json($spots);
@@ -124,9 +127,9 @@
                     window.addEventListener('DOMContentLoaded', init_map());
 
                 </script>
-            　　</div>
+                </div>
               </div>
-        　　</div>
+                </div>
             <div class="col-md-2 p-0">
               <div class="card h-100">
                 <div class="card-header d-flex">登録地点一覧 <a class='ml-auto' href='/create'><i class="fas fa-plus-circle"></i></a></div>
